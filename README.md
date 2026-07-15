@@ -50,9 +50,9 @@ await owlic.trainingActions.saveBeneficiaries(created.id, {
 });
 ```
 
-`new Owlic()` with no arguments reads `OWLIC_API_KEY` (and optionally `OWLIC_BASE_URL`) from the environment.
+`new Owlic()` with no arguments reads `OWLIC_API_KEY` (and optionally `OWLIC_BASE_URL`) from the environment. A keyless client is allowed and can call the open endpoints (`health()`); authenticated methods then throw a helpful error at call time.
 
-> ⚠️ **Server-side only.** API keys are secrets — never ship them to a browser. The constructor throws if it detects a browser environment (override with `dangerouslyAllowBrowser: true` at your own risk).
+> ⚠️ **Server-side only.** API keys are secrets — never ship them to a browser. The constructor throws if it detects a browser environment while an API key is configured (override with `dangerouslyAllowBrowser: true` at your own risk).
 
 ## Configuration
 
@@ -60,8 +60,8 @@ await owlic.trainingActions.saveBeneficiaries(created.id, {
 const owlic = new Owlic({
   apiKey: 'owlic_sk_…',            // default: process.env.OWLIC_API_KEY
   baseUrl: 'https://api.owlic.fr', // default: process.env.OWLIC_BASE_URL ?? https://api.owlic.fr
-  timeout: 30_000,                 // ms per attempt (default 30s)
-  maxRetries: 2,                   // retries for 429/5xx/network failures (default 2)
+  timeout: 30_000,                 // ms per attempt, covers the body read (default 30s)
+  maxRetries: 2,                   // see "Retries" below (default 2)
   fetch: customFetch,              // bring your own fetch (proxy, instrumentation…)
   defaultHeaders: { 'x-request-source': 'my-integration' },
 });
@@ -78,7 +78,7 @@ await owlic.trainers.list({ timeout: 5_000, maxRetries: 0, signal: abortControll
 | SDK method | Endpoint |
 |---|---|
 | `owlic.whoami()` | `GET /v1/whoami` |
-| `owlic.health()` | `GET /health` (no auth; returns the payload even on 503) |
+| `owlic.health()` | `GET /health` (no auth — works on a keyless client; returns the payload even on 503) |
 | `owlic.trainers.list()` | `GET /v1/trainers` |
 | `owlic.trainers.get(id)` | `GET /v1/trainers/{trainerId}` |
 | `owlic.trainingPrograms.list({ page, limit })` | `GET /v1/training-programs` |
@@ -151,7 +151,15 @@ try {
 | `OwlicConnectionError` | — | Network failure (no HTTP response) |
 | `OwlicTimeoutError` | — | Request exceeded `timeout` |
 
-429, 5xx, timeouts and connection errors are retried automatically (`maxRetries`, exponential backoff, honors `Retry-After`). 4xx client errors are never retried.
+### Retries
+
+Retries (`maxRetries`, exponential backoff, honors `Retry-After`) are **method-aware**:
+
+- **429** is retried for every method — the API's rate limiters reject requests *before* processing them, so a retry can never duplicate work. Exceptions: quota exhaustion (`USAGE_EXCEEDED`) is never retried, and a `Retry-After` beyond 60s fails fast instead of blocking.
+- **Timeouts, connection errors and 5xx** are retried for idempotent methods only (GET/HEAD/PUT/DELETE). **POSTs are never replayed** after a timeout or 5xx: the API has no idempotency keys, and the server may have committed the write before the failure — a replay could silently duplicate the resource (e.g. a training action and its Qualiopi folder).
+- Other 4xx client errors are never retried.
+
+Aborting via `RequestOptions.signal` takes effect immediately, including during a retry backoff.
 
 ## Types
 

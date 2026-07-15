@@ -33,10 +33,7 @@ export class TrainingPrograms {
         query: { page, limit: params?.limit },
         options,
       });
-    const envelope = await this.#client.request<PaginatedEnvelope<TrainingProgram>>('GET', '/v1/training-programs', {
-      query: { page: params?.page, limit: params?.limit },
-      options,
-    });
+    const envelope = await fetchPage(params?.page ?? 1);
     return new Page(envelope, fetchPage);
   }
 

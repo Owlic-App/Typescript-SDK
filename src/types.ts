@@ -48,6 +48,12 @@ export type TrainingProgramDetail = z.infer<typeof contract.TrainingProgramDetai
 export type TrainingAction = z.infer<typeof contract.TrainingActionSchema>;
 export type TrainingActionDetail = z.infer<typeof contract.TrainingActionDetailSchema>;
 export type TrainingActionRecord = z.infer<typeof contract.TrainingActionRecordSchema>;
+export type AssignedTrainer = z.infer<typeof contract.AssignedTrainerSchema>;
+export type TrainingActionBeneficiary = z.infer<typeof contract.TrainingActionBeneficiarySchema>;
+export type BeneficiaryCompany = z.infer<typeof contract.BeneficiaryCompanySchema>;
+export type PlannedSession = z.infer<typeof contract.PlannedSessionSchema>;
+export type SavedNeedsAnalysis = z.infer<typeof contract.SavedNeedsAnalysisSchema>;
+export type ConventionsStatus = z.infer<typeof contract.ConventionsStatusSchema>;
 
 // ── Training actions (Qualiopi workflow writes) ──────────────────────────────
 
@@ -109,6 +115,8 @@ export interface ApiCaller {
       options?: RequestOptions;
       /** Non-2xx statuses whose JSON body is returned instead of thrown (e.g. 503 for /health). */
       acceptStatuses?: readonly number[];
+      /** Set to false for open endpoints (no API key sent nor required). Defaults to true. */
+      auth?: boolean;
     }
   ): Promise<T>;
 }

@@ -6,6 +6,7 @@
  * case they care about. `code`/`message` come from the API's uniform
  * `{ error: { code, message } }` envelope.
  */
+import type { ErrorResponse } from './types';
 
 export class OwlicError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {
@@ -73,6 +74,19 @@ export function parseRetryAfter(header: string | null): number | undefined {
   return undefined;
 }
 
+/**
+ * Structural guard anchored to the contract's `ErrorResponse` type: a rename of
+ * the envelope in `@owlic/api-contract` surfaces here as a compile error
+ * instead of silently degrading every error to `UNKNOWN`.
+ */
+function isErrorEnvelope(body: unknown): body is ErrorResponse {
+  if (typeof body !== 'object' || body === null) return false;
+  const error = (body as Partial<ErrorResponse>).error;
+  return (
+    typeof error === 'object' && error !== null && typeof error.code === 'string' && typeof error.message === 'string'
+  );
+}
+
 /** Build the right `OwlicAPIError` subclass for a response. */
 export function apiErrorFromResponse(
   status: number,
@@ -81,16 +95,9 @@ export function apiErrorFromResponse(
 ): OwlicAPIError {
   let code = 'UNKNOWN';
   let message = `Request failed with status ${status}`;
-  if (
-    typeof body === 'object' &&
-    body !== null &&
-    'error' in body &&
-    typeof (body as { error: unknown }).error === 'object' &&
-    (body as { error: unknown }).error !== null
-  ) {
-    const err = (body as { error: Record<string, unknown> }).error;
-    if (typeof err.code === 'string') code = err.code;
-    if (typeof err.message === 'string') message = err.message;
+  if (isErrorEnvelope(body)) {
+    code = body.error.code;
+    message = body.error.message;
   }
 
   switch (status) {

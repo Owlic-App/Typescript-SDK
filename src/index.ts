@@ -13,7 +13,7 @@
  * not drift from the API. Zero runtime dependencies — works on Node.js >= 18,
  * edge runtimes and serverless.
  */
-export { Owlic, OwlicClient } from './client';
+export { Owlic } from './client';
 export type { OwlicOptions } from './client';
 
 export { Page } from './pagination';
@@ -61,6 +61,12 @@ export type {
   TrainingAction,
   TrainingActionDetail,
   TrainingActionRecord,
+  AssignedTrainer,
+  TrainingActionBeneficiary,
+  BeneficiaryCompany,
+  PlannedSession,
+  SavedNeedsAnalysis,
+  ConventionsStatus,
   CreateTrainingActionRequest,
   NeedsAnalysisRequest,
   NeedsAnalysisSaved,
