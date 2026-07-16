@@ -81,6 +81,14 @@ await owlic.trainers.list({ timeout: 5_000, maxRetries: 0, signal: abortControll
 | `owlic.trainers.get(id)` | `GET /v1/trainers/{trainerId}` |
 | `owlic.trainingPrograms.list({ page, limit })` | `GET /v1/training-programs` |
 | `owlic.trainingPrograms.get(id)` | `GET /v1/training-programs/{programId}` |
+| `owlic.trainingPrograms.create(body)` | `POST /v1/training-programs` |
+| `owlic.trainingPrograms.update(id, body)` | `PATCH /v1/training-programs/{programId}` (core fields) |
+| `owlic.trainingPrograms.delete(id)` | `DELETE /v1/training-programs/{programId}` (soft delete) |
+| `owlic.trainingPrograms.replaceModules(id, body)` | `PUT /v1/training-programs/{programId}/modules` |
+| `owlic.trainingPrograms.addTrainers(id, body)` | `POST /v1/training-programs/{programId}/trainers` |
+| `owlic.trainingPrograms.removeTrainer(id, trainerId)` | `DELETE /v1/training-programs/{programId}/trainers/{trainerId}` |
+| `owlic.trainingPrograms.updatePositioning(id, body)` | `PATCH /v1/training-programs/{programId}/positioning` |
+| `owlic.trainingPrograms.updateEvaluation(id, body)` | `PATCH /v1/training-programs/{programId}/evaluation` |
 | `owlic.trainingActions.list()` | `GET /v1/training-actions` |
 | `owlic.trainingActions.get(id)` | `GET /v1/training-actions/{actionId}` |
 | `owlic.trainingActions.create(body)` | `POST /v1/training-actions` |

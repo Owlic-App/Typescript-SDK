@@ -427,6 +427,100 @@ describe('Owlic client — retries', () => {
   });
 });
 
+describe('Owlic client — training program writes', () => {
+  it('should create a program (POST + JSON body, unwrapped data)', async () => {
+    const record = {
+      id: 'tp_1',
+      title: 'Formation',
+      description: null,
+      modulesCount: 0,
+      totalDuration: 0,
+      createdAt: '2026-01-01T00:00:00.000Z',
+    };
+    const { client, fetchMock } = createClient([jsonResponse(201, { data: record })]);
+
+    const created = await client.trainingPrograms.create({ title: 'Formation', priceExcludingTax: 900 });
+
+    expect(created).toEqual(record);
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://api.owlic.fr/v1/training-programs');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body as string)).toEqual({ title: 'Formation', priceExcludingTax: 900 });
+  });
+
+  it('should PATCH core fields', async () => {
+    const { client, fetchMock } = createClient([jsonResponse(200, { data: { id: 'tp_1', title: 'New' } })]);
+
+    await client.trainingPrograms.update('tp_1', { title: 'New', priceExcludingTax: 1500 });
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://api.owlic.fr/v1/training-programs/tp_1');
+    expect(init.method).toBe('PATCH');
+    expect(JSON.parse(init.body as string)).toEqual({ title: 'New', priceExcludingTax: 1500 });
+  });
+
+  it('should DELETE a program without a body or content-type', async () => {
+    const { client, fetchMock } = createClient([jsonResponse(200, { data: { id: 'tp_1', deleted: true } })]);
+
+    const res = await client.trainingPrograms.delete('tp_1');
+
+    expect(res).toEqual({ id: 'tp_1', deleted: true });
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://api.owlic.fr/v1/training-programs/tp_1');
+    expect(init.method).toBe('DELETE');
+    expect(init.body).toBeUndefined();
+    expect((init.headers as Record<string, string>)['content-type']).toBeUndefined();
+  });
+
+  it('should PUT the module/activity tree', async () => {
+    const { client, fetchMock } = createClient([jsonResponse(200, { data: { id: 'tp_1', modules: [] } })]);
+
+    await client.trainingPrograms.replaceModules('tp_1', {
+      modules: [{ name: 'M1', activities: [{ name: 'A1', durationMinutes: 60 }] }],
+    });
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://api.owlic.fr/v1/training-programs/tp_1/modules');
+    expect(init.method).toBe('PUT');
+  });
+
+  it('should add and remove trainers (nested, URL-encoded path)', async () => {
+    const { client, fetchMock } = createClient([
+      jsonResponse(200, { data: { programId: 'tp_1', trainerIds: ['tr_1'] } }),
+      jsonResponse(200, { data: { programId: 'tp_1', trainerIds: [] } }),
+    ]);
+
+    const added = await client.trainingPrograms.addTrainers('tp_1', { trainerIds: ['tr_1'] });
+    expect(added.trainerIds).toEqual(['tr_1']);
+    const [addUrl, addInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(addUrl).toBe('https://api.owlic.fr/v1/training-programs/tp_1/trainers');
+    expect(addInit.method).toBe('POST');
+
+    const removed = await client.trainingPrograms.removeTrainer('tp_1', 'tr/1');
+    expect(removed.trainerIds).toEqual([]);
+    const [rmUrl, rmInit] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(rmUrl).toBe('https://api.owlic.fr/v1/training-programs/tp_1/trainers/tr%2F1');
+    expect(rmInit.method).toBe('DELETE');
+  });
+
+  it('should PATCH positioning and evaluation URL references', async () => {
+    const { client, fetchMock } = createClient([
+      jsonResponse(200, { data: { id: 'tp_1', positioningQuestionnaireUrl: 'https://x' } }),
+      jsonResponse(200, { data: { id: 'tp_1', evaluationExternalLink: 'https://y' } }),
+    ]);
+
+    await client.trainingPrograms.updatePositioning('tp_1', { positioningQuestionnaireUrl: 'https://x' });
+    await client.trainingPrograms.updateEvaluation('tp_1', { evaluationExternalLink: 'https://y' });
+
+    const [posUrl, posInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(posUrl).toBe('https://api.owlic.fr/v1/training-programs/tp_1/positioning');
+    expect(posInit.method).toBe('PATCH');
+    const [evalUrl, evalInit] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(evalUrl).toBe('https://api.owlic.fr/v1/training-programs/tp_1/evaluation');
+    expect(evalInit.method).toBe('PATCH');
+  });
+});
+
 describe('Owlic client — contract conformance', () => {
   it('should cover every route declared in the business registry', async () => {
     const { buildBusinessRegistry } = await import('../../../api-contract/src/businessRegistry');
@@ -450,6 +544,14 @@ describe('Owlic client — contract conformance', () => {
     await client.trainers.get(ID);
     await client.trainingPrograms.list();
     await client.trainingPrograms.get(ID);
+    await client.trainingPrograms.create({ title: 'P' });
+    await client.trainingPrograms.update(ID, { title: 'P2' });
+    await client.trainingPrograms.delete(ID);
+    await client.trainingPrograms.replaceModules(ID, { modules: [] });
+    await client.trainingPrograms.addTrainers(ID, { trainerIds: ['00000000-0000-0000-0000-000000000001'] });
+    await client.trainingPrograms.removeTrainer(ID, ID);
+    await client.trainingPrograms.updatePositioning(ID, { positioningQuestionnaireUrl: 'https://forms.example/x' });
+    await client.trainingPrograms.updateEvaluation(ID, { evaluationExternalLink: 'https://forms.example/y' });
     await client.trainingActions.list();
     await client.trainingActions.get(ID);
     await client.trainingActions.create({ title: 'T', requiresQualiopiCompliance: false });

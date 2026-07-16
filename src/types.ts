@@ -43,6 +43,28 @@ export type TrainingProgram = z.infer<typeof contract.TrainingProgramSchema>;
 export type TrainingProgramModule = z.infer<typeof contract.TrainingProgramModuleSchema>;
 export type TrainingProgramDetail = z.infer<typeof contract.TrainingProgramDetailSchema>;
 
+// ── Training programs (writes) ───────────────────────────────────────────────
+
+export type CreateTrainingProgramRequest = z.infer<typeof contract.CreateTrainingProgramRequestSchema>;
+export type CreateTrainingProgramResult = z.infer<typeof contract.CreateTrainingProgramResultSchema>;
+
+export type UpdateTrainingProgramCoreRequest = z.infer<typeof contract.UpdateTrainingProgramCoreRequestSchema>;
+export type TrainingProgramCoreResult = z.infer<typeof contract.TrainingProgramCoreResultSchema>;
+
+export type DeletedTrainingProgramResult = z.infer<typeof contract.DeletedTrainingProgramResultSchema>;
+
+export type UpdateTrainingProgramModulesRequest = z.infer<typeof contract.UpdateTrainingProgramModulesRequestSchema>;
+export type TrainingProgramModulesResult = z.infer<typeof contract.TrainingProgramModulesResultSchema>;
+
+export type AddProgramTrainersRequest = z.infer<typeof contract.AddProgramTrainersRequestSchema>;
+export type ProgramTrainersResult = z.infer<typeof contract.ProgramTrainersResultSchema>;
+
+export type UpdateTrainingProgramPositioningRequest = z.infer<typeof contract.UpdateTrainingProgramPositioningRequestSchema>;
+export type TrainingProgramPositioningResult = z.infer<typeof contract.TrainingProgramPositioningResultSchema>;
+
+export type UpdateTrainingProgramEvaluationRequest = z.infer<typeof contract.UpdateTrainingProgramEvaluationRequestSchema>;
+export type TrainingProgramEvaluationResult = z.infer<typeof contract.TrainingProgramEvaluationResultSchema>;
+
 // ── Training actions (reads) ─────────────────────────────────────────────────
 
 export type TrainingAction = z.infer<typeof contract.TrainingActionSchema>;
