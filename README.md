@@ -171,6 +171,10 @@ import type { Trainer, TrainingProgramDetail, CreateTrainingActionRequest } from
 
 They are `z.infer<…>` of the `@owlic/api-contract` schemas — the single source of truth shared with the OpenAPI document, so a contract change immediately surfaces as a compile error here.
 
+## Public mirror
+
+This package is mirrored to [`Owlic-App/Typescript-SDK`](https://github.com/Owlic-App/Typescript-SDK) by the `Sync SDK Mirror` GitHub Action (`.github/workflows/sync-sdk-mirror.yml`): every merge to `main` touching `packages/sdk/**` force-pushes a fresh `git subtree split` of this directory over the mirror's `main`. The monorepo is the single source of truth — **never commit to the mirror directly**, changes there are overwritten on the next sync.
+
 ## Publishing (later)
 
 The package follows the repo's source-only convention (`main` → `src/index.ts`, ADR-31). To publish it on npm for external consumers:
