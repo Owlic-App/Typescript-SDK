@@ -1,25 +1,65 @@
 {
   "name": "@owlic/sdk",
   "version": "0.1.0",
-  "private": true,
-  "description": "Official TypeScript SDK for the Owlic public API (api.owlic.fr). Typed client derived from @owlic/api-contract — its dependencies are type-only (nothing imported at runtime), works everywhere fetch does (Node 18+, edge, serverless).",
+  "description": "Official TypeScript SDK for the Owlic public API (api.owlic.fr). Fully typed client derived from the API's OpenAPI/Zod contract — no runtime imports beyond fetch (zod is a type-level dependency), works on Node 18+, edge and serverless.",
+  "license": "MIT",
   "type": "module",
-  "main": "./src/index.ts",
-  "module": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./*": "./src/*"
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Owlic-App/Typescript-SDK.git"
+  },
+  "homepage": "https://github.com/Owlic-App/Typescript-SDK#readme",
+  "bugs": {
+    "url": "https://github.com/Owlic-App/Typescript-SDK/issues"
+  },
+  "keywords": [
+    "owlic",
+    "sdk",
+    "api-client",
+    "typescript",
+    "qualiopi",
+    "formation",
+    "training"
+  ],
   "scripts": {
-    "type:check": "tsc --noEmit"
+    "build": "tsup",
+    "type:check": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@owlic/api-contract": "*",
     "zod": "^3.25.36"
   },
   "devDependencies": {
+    "@owlic/api-contract": "*",
     "@types/node": "^20",
+    "tsup": "^8.5.1",
     "typescript": "^5"
   }
 }

@@ -3,18 +3,16 @@
 Official TypeScript SDK for the [Owlic public API](https://api.owlic.fr/docs).
 
 - **Fully typed** — every request/response type is inferred from `@owlic/api-contract`, the same Zod schemas that generate the OpenAPI document served at `/v1/openapi.json`. The SDK cannot drift from the API.
-- **Zero runtime dependencies** — a thin layer over `fetch`. Works on Node.js ≥ 18, Vercel/edge runtimes, Bun and Deno.
+- **No runtime imports** — a thin layer over `fetch` (zod appears only as a type-level dependency). Works on Node.js ≥ 18, Vercel/edge runtimes, Bun and Deno.
 - **Batteries included** — automatic retries with exponential backoff (`Retry-After` aware), per-request timeout & abort, typed errors, auto-pagination.
 
 ## Installation
 
-Inside the monorepo the package is available directly:
-
-```ts
-import { Owlic } from '@owlic/sdk';
+```bash
+npm install @owlic/sdk
 ```
 
-For external consumers, publishing to npm requires adding a build step (e.g. `tsup`) since workspace packages ship raw TypeScript — see “Publishing” below.
+Inside the Owlic monorepo the package is consumed directly from source (root tsconfig paths) — no install needed.
 
 ## Quickstart
 
@@ -175,13 +173,17 @@ They are `z.infer<…>` of the `@owlic/api-contract` schemas — the single sour
 
 This package is mirrored to [`Owlic-App/Typescript-SDK`](https://github.com/Owlic-App/Typescript-SDK) by the `Sync SDK Mirror` GitHub Action (`.github/workflows/sync-sdk-mirror.yml`): every merge to `main` touching `packages/sdk/**` force-pushes a fresh `git subtree split` of this directory over the mirror's `main`. The monorepo is the single source of truth — **never commit to the mirror directly**, changes there are overwritten on the next sync.
 
-## Publishing (later)
+## Release process (npm)
 
-The package follows the repo's source-only convention (`main` → `src/index.ts`, ADR-31). To publish it on npm for external consumers:
+The package is published to npm as [`@owlic/sdk`](https://www.npmjs.com/package/@owlic/sdk) by the `Publish SDK to npm` GitHub Action (`.github/workflows/publish-sdk.yml`, manual trigger). The build (`tsup`) emits ESM + CJS + `.d.ts` with the private `@owlic/api-contract` types **inlined**, so the published package is self-contained (zod is its only — type-level — dependency).
 
-1. Add a bundler (`tsup src/index.ts --format esm,cjs --dts`) and point `exports` at `dist/`.
-2. Inline `@owlic/api-contract` types at build time (`tsup --dts-resolve`) or publish the contract package alongside.
-3. Drop `"private": true`, version with changesets/semver.
+To release:
+
+1. Bump `version` in `packages/sdk/package.json` (semver) and merge to `main`.
+2. Run the **Publish SDK to npm** workflow from the Actions tab. It tests, builds, verifies the `.d.ts` is self-contained, refuses to overwrite an existing version, then publishes.
+3. Requires the `NPM_TOKEN` repo secret (npm Automation token with publish rights on the `@owlic` scope).
+
+Local dry run: `npm run build --workspace @owlic/sdk && npm pack --workspace @owlic/sdk`.
 
 ## Development
 
