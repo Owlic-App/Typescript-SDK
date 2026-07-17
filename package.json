@@ -1,6 +1,6 @@
 {
   "name": "@owlic/sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Official TypeScript SDK for the Owlic public API (api.owlic.fr). Fully typed client derived from the API's OpenAPI/Zod contract — no runtime imports beyond fetch (zod is a type-level dependency), works on Node 18+, edge and serverless.",
   "license": "MIT",
   "type": "module",

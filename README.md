@@ -181,6 +181,16 @@ They are `z.infer<…>` of the `@owlic/api-contract` schemas — the single sour
 
 This package is mirrored to [`Owlic-App/Typescript-SDK`](https://github.com/Owlic-App/Typescript-SDK) by the `Sync SDK Mirror` GitHub Action (`.github/workflows/sync-sdk-mirror.yml`): every merge to `main` touching `packages/sdk/**` force-pushes a fresh `git subtree split` of this directory over the mirror's `main`. The monorepo is the single source of truth — **never commit to the mirror directly**, changes there are overwritten on the next sync.
 
+## Changelog
+
+### 0.2.0
+
+- **Training-program writes** — the `trainingPrograms` resource is no longer read-only. Added `create`, `update` (core fields: title, description, pricing, distribution, prerequisites, objectives), `delete` (soft), `replaceModules`, `addTrainers` / `removeTrainer`, and `updatePositioning` / `updateEvaluation`, covering the per-section write endpoints of `/v1/training-programs*`. Backward compatible — no existing method changed.
+
+### 0.1.0
+
+- Initial release: `whoami`, `health`, `trainers` (list/get), `trainingPrograms` (list/get, auto-paginated), and `trainingActions` (list/get + the Qualiopi workflow writes). Typed errors, retries, timeouts and auto-pagination.
+
 ## Release process (npm)
 
 The package is published to npm as [`@owlic/sdk`](https://www.npmjs.com/package/@owlic/sdk) by the `Publish SDK to npm` GitHub Action (`.github/workflows/publish-sdk.yml`, manual trigger). The build (`tsup`) emits ESM + CJS + `.d.ts` with the private `@owlic/api-contract` types **inlined**, so the published package is self-contained (zod is its only — type-level — dependency).
