@@ -41,7 +41,7 @@ export class BadRequestError extends OwlicAPIError {}
 /** 401 — missing or invalid API key. */
 export class AuthenticationError extends OwlicAPIError {}
 
-/** 403 — key disabled/expired, or the `apiKeys` feature is off for the organization. */
+/** 403 — key disabled/expired. */
 export class PermissionDeniedError extends OwlicAPIError {}
 
 /** 404 — resource not found in the calling key's organization. */

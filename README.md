@@ -149,7 +149,7 @@ try {
 |---|---|---|
 | `BadRequestError` | 400 | Invalid request body/parameters |
 | `AuthenticationError` | 401 | Missing or invalid API key |
-| `PermissionDeniedError` | 403 | Key disabled/expired, or `apiKeys` feature off |
+| `PermissionDeniedError` | 403 | Key disabled/expired |
 | `NotFoundError` | 404 | Resource not found in your organization |
 | `UnprocessableEntityError` | 422 | Rejected by a domain rule |
 | `RateLimitError` | 429 | Rate limit / quota exceeded (`retryAfter` in ms) |
