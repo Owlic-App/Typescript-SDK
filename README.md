@@ -184,6 +184,12 @@ This package is mirrored to [`Owlic-App/Typescript-SDK`](https://github.com/Owli
 
 ## Changelog
 
+### 0.3.0
+
+- **Training-action period** — added `trainingActions.setPeriod(id, { startDate, endDate })` (`POST /v1/training-actions/{actionId}/period`, dates `YYYY-MM-DD`) and the `SetPeriodRequest` / `TrainingActionPeriod` types: records the period of a training action whose session dates are not known yet. Planned sessions take precedence over the period in the convention.
+- **Company address** — `CompanyInput` (in `saveBeneficiaries`) accepts an optional `rue` (street line, max 255 chars), needed to create a quote in the invoicing tool.
+- **`generateConvention` template** — `GenerateConventionRequest.templateId` is now typed `'qualiopi-standard'` instead of a UUID string. The API never accepted any other value, so no working call changes; TypeScript code passing a plain `string` must now pass the literal.
+
 ### 0.2.0
 
 - **Training-program writes** — the `trainingPrograms` resource is no longer read-only. Added `create`, `update` (core fields: title, description, pricing, distribution, prerequisites, objectives), `delete` (soft), `replaceModules`, `addTrainers` / `removeTrainer`, and `updatePositioning` / `updateEvaluation`, covering the per-section write endpoints of `/v1/training-programs*`. Backward compatible — no existing method changed.
