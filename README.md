@@ -96,6 +96,7 @@ await owlic.trainers.list({ timeout: 5_000, maxRetries: 0, signal: abortControll
 | `owlic.trainingActions.saveBeneficiaries(id, body)` | `POST /v1/training-actions/{actionId}/beneficiaries` |
 | `owlic.trainingActions.assignProgram(id, body)` | `POST /v1/training-actions/{actionId}/program` |
 | `owlic.trainingActions.planSessions(id, body)` | `POST /v1/training-actions/{actionId}/sessions` |
+| `owlic.trainingActions.setPeriod(id, body)` | `POST /v1/training-actions/{actionId}/period` |
 | `owlic.trainingActions.assignTrainers(id, body)` | `POST /v1/training-actions/{actionId}/trainers` |
 | `owlic.trainingActions.setPricing(id, body)` | `POST /v1/training-actions/{actionId}/pricing` |
 | `owlic.trainingActions.generateConvention(id, body)` | `POST /v1/training-actions/{actionId}/convention` |

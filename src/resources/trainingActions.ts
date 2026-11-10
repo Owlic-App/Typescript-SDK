@@ -15,9 +15,11 @@ import type {
   RequestOptions,
   SaveBeneficiariesRequest,
   SaveBeneficiariesResult,
+  SetPeriodRequest,
   SetPricingRequest,
   TrainingAction,
   TrainingActionDetail,
+  TrainingActionPeriod,
   TrainingActionRecord,
 } from '../types';
 
@@ -25,8 +27,8 @@ import type {
  * `/v1/training-actions*` — training actions and their Qualiopi workflow.
  *
  * The write methods mirror the workflow steps: `create` → `saveNeedsAnalysis` →
- * `saveBeneficiaries` → `assignProgram` → `planSessions` → `assignTrainers` →
- * `setPricing` → `generateConvention`.
+ * `saveBeneficiaries` → `assignProgram` → `planSessions` (or `setPeriod` while the
+ * session dates are not known yet) → `assignTrainers` → `setPricing` → `generateConvention`.
  */
 export class TrainingActions {
   #client: ApiCaller;
@@ -120,6 +122,23 @@ export class TrainingActions {
     const res = await this.#client.request<DataEnvelope<PlanSessionsResult>>(
       'POST',
       this.#actionPath(actionId, '/sessions'),
+      { body, options }
+    );
+    return res.data;
+  }
+
+  /**
+   * Record the period of the action (`YYYY-MM-DD` start and end) while the session
+   * dates are not known yet. Planned sessions take precedence in the convention.
+   */
+  async setPeriod(
+    actionId: string,
+    body: SetPeriodRequest,
+    options?: RequestOptions
+  ): Promise<TrainingActionPeriod> {
+    const res = await this.#client.request<DataEnvelope<TrainingActionPeriod>>(
+      'POST',
+      this.#actionPath(actionId, '/period'),
       { body, options }
     );
     return res.data;

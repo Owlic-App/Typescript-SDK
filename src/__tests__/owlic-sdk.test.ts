@@ -521,6 +521,21 @@ describe('Owlic client — training program writes', () => {
   });
 });
 
+describe('Owlic client — training action writes', () => {
+  it('should POST the period of a training action whose session dates are not known yet', async () => {
+    const period = { startDate: '2027-01-01T00:00:00.000Z', endDate: '2027-06-30T00:00:00.000Z' };
+    const { client, fetchMock } = createClient([jsonResponse(200, { data: period })]);
+
+    const result = await client.trainingActions.setPeriod('ta_1', { startDate: '2027-01-01', endDate: '2027-06-30' });
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://api.owlic.fr/v1/training-actions/ta_1/period');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body as string)).toEqual({ startDate: '2027-01-01', endDate: '2027-06-30' });
+    expect(result).toEqual(period);
+  });
+});
+
 describe('Owlic client — contract conformance', () => {
   it('should cover every route declared in the business registry', async () => {
     const { buildBusinessRegistry } = await import('../../../api-contract/src/businessRegistry');
@@ -564,6 +579,7 @@ describe('Owlic client — contract conformance', () => {
     await client.trainingActions.saveBeneficiaries(ID, { beneficiaries: [] });
     await client.trainingActions.assignProgram(ID, { trainingProgramId: 'p_1' });
     await client.trainingActions.planSessions(ID, { sessions: [] });
+    await client.trainingActions.setPeriod(ID, { startDate: '2027-01-01', endDate: '2027-06-30' });
     await client.trainingActions.assignTrainers(ID, { trainers: [] });
     await client.trainingActions.setPricing(ID, { pricingData: { expenses: [] } });
     await client.trainingActions.generateConvention(ID, {

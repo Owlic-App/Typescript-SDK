@@ -95,6 +95,8 @@ export type TimeSlot = z.infer<typeof contract.TimeSlotSchema>;
 export type SessionInput = z.infer<typeof contract.SessionInputSchema>;
 export type PlanSessionsRequest = z.infer<typeof contract.PlanSessionsRequestSchema>;
 export type PlanSessionsResult = z.infer<typeof contract.PlanSessionsResultSchema>;
+export type SetPeriodRequest = z.infer<typeof contract.SetPeriodRequestSchema>;
+export type TrainingActionPeriod = z.infer<typeof contract.TrainingActionPeriodSchema>;
 
 export type TrainerInput = z.infer<typeof contract.TrainerInputSchema>;
 export type InviteTrainersRequest = z.infer<typeof contract.InviteTrainersRequestSchema>;

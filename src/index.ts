@@ -93,6 +93,8 @@ export type {
   SessionInput,
   PlanSessionsRequest,
   PlanSessionsResult,
+  SetPeriodRequest,
+  TrainingActionPeriod,
   TrainerInput,
   InviteTrainersRequest,
   InviteTrainersResult,
