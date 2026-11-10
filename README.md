@@ -206,7 +206,7 @@ To release:
 
 1. Bump `version` in `packages/sdk/package.json` (semver) and merge to `main`.
 2. Run the **Publish SDK to npm** workflow from the Actions tab. It tests, builds, verifies the `.d.ts` is self-contained, refuses to overwrite an existing version, then publishes.
-3. Requires the `NPM_TOKEN` repo secret (npm Automation token with publish rights on the `@owlic` scope).
+3. No token: the workflow publishes through npm **trusted publishing** (OIDC). The trusted publisher is declared on npmjs.com → `@owlic/sdk` → Settings → Trusted publishing (GitHub Actions, `Owlic-App` / `Application`, workflow `publish-sdk.yml`). Renaming the workflow file breaks publishing until that setting is updated.
 
 Local dry run: `npm run build --workspace @owlic/sdk && npm pack --workspace @owlic/sdk`.
 
