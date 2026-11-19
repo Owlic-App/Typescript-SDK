@@ -15,6 +15,7 @@ import {
   RateLimitError,
   UnprocessableEntityError,
 } from '../index';
+import type { ErrorResponse } from '../index';
 
 type FetchMock = ReturnType<typeof vi.fn> & typeof globalThis.fetch;
 
@@ -193,6 +194,15 @@ describe('Owlic client — requests', () => {
     expect(headers['x-request-source']).toBe('integration');
   });
 
+  it('Given any request, When it is sent, Then it accepts both JSON and Problem Details responses', async () => {
+    const { client, fetchMock } = createClient([jsonResponse(200, { data: [] })]);
+
+    await client.trainers.list();
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect((init.headers as Record<string, string>).accept).toBe('application/json, application/problem+json');
+  });
+
   it('should return whoami payload directly (no envelope)', async () => {
     const me = { authenticated: true, organizationId: 'org_1', userId: 'u_1', apiKeyId: 'k_1' };
     const { client } = createClient([jsonResponse(200, me)]);
@@ -297,6 +307,65 @@ describe('Owlic client — errors', () => {
     expect((error as RateLimitError).retryAfter).toBe(3000);
   });
 
+  it('Given a body refused by its schema, When the API answers with Problem Details, Then the error carries type, title and every field error', async () => {
+    const body: ErrorResponse = {
+      type: 'https://api.owlic.fr/problems/invalid-request',
+      title: 'Invalid request',
+      status: 400,
+      detail: 'String must contain at least 1 character(s)',
+      errors: [
+        { detail: 'String must contain at least 1 character(s)', pointer: '#/title' },
+        { detail: 'Number must be greater than or equal to 0', pointer: '#/priceExcludingTax' },
+      ],
+      error: { code: 'BAD_REQUEST', message: 'String must contain at least 1 character(s)' },
+    };
+    const { client } = createClient([jsonResponse(400, body, { 'content-type': 'application/problem+json' })]);
+
+    const error = await client.trainingPrograms
+      .create({ title: '', priceExcludingTax: -1 })
+      .catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(BadRequestError);
+    expect(error).toMatchObject({
+      status: 400,
+      code: 'BAD_REQUEST',
+      message: 'String must contain at least 1 character(s)',
+      type: 'https://api.owlic.fr/problems/invalid-request',
+      title: 'Invalid request',
+      errors: body.errors,
+    });
+  });
+
+  it('Given a detail that differs from the legacy message, When the error is built, Then its message is the detail', async () => {
+    const body: ErrorResponse = {
+      type: 'about:blank',
+      title: 'Not Found',
+      status: 404,
+      detail: 'Training program not found.',
+      error: { code: 'NOT_FOUND', message: 'Not found' },
+    };
+    const { client } = createClient([jsonResponse(404, body)]);
+
+    const error = await client.trainingPrograms.get('prog_missing').catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(NotFoundError);
+    expect((error as NotFoundError).message).toBe('Training program not found.');
+    expect((error as NotFoundError).code).toBe('NOT_FOUND');
+    expect((error as NotFoundError).errors).toBeUndefined();
+  });
+
+  it('Given a body with only the legacy envelope, When the error is built, Then code and message come from it and the Problem Details members are absent', async () => {
+    const { client } = createClient([jsonResponse(401, apiError('INVALID_API_KEY', 'Invalid or inactive API key.'))]);
+
+    const error = await client.trainers.list().catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AuthenticationError);
+    expect(error).toMatchObject({ code: 'INVALID_API_KEY', message: 'Invalid or inactive API key.' });
+    expect((error as AuthenticationError).type).toBeUndefined();
+    expect((error as AuthenticationError).title).toBeUndefined();
+    expect((error as AuthenticationError).errors).toBeUndefined();
+  });
+
   it('should time out with OwlicTimeoutError', async () => {
     const hangingFetch = vi.fn(
       (_url: string, init: RequestInit) =>
@@ -375,6 +444,23 @@ describe('Owlic client — retries', () => {
     );
 
     await expect(client.trainers.list()).rejects.toBeInstanceOf(RateLimitError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('Given a quota-exhausted 429 as Problem Details, When retries are allowed, Then it is still not retried', async () => {
+    const body: ErrorResponse = {
+      type: 'https://api.owlic.fr/problems/usage-quota-exceeded',
+      title: 'Usage quota exceeded',
+      status: 429,
+      detail: 'Invalid or inactive API key.',
+      error: { code: 'USAGE_EXCEEDED', message: 'Invalid or inactive API key.' },
+    };
+    const { client, fetchMock } = createClient([jsonResponse(429, body)], { maxRetries: 3 });
+
+    const error = await client.trainers.list().catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(RateLimitError);
+    expect((error as RateLimitError).type).toBe('https://api.owlic.fr/problems/usage-quota-exceeded');
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 

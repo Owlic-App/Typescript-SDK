@@ -25,7 +25,11 @@ export interface PaginatedEnvelope<T> {
   pagination: Pagination;
 }
 
+/** Error body of every failed request: RFC 9457 Problem Details, plus the legacy `error` envelope. */
 export type ErrorResponse = z.infer<typeof contract.ErrorResponseSchema>;
+
+/** One field the API rejected, from the `errors` member of a Problem Details body. */
+export type ProblemFieldError = NonNullable<ErrorResponse['errors']>[number];
 
 // ── Identity & system ────────────────────────────────────────────────────────
 

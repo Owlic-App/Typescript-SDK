@@ -3,10 +3,19 @@
  *
  * Every failure is an `OwlicError`; HTTP failures are `OwlicAPIError` with a
  * status-specific subclass so callers can `catch` (or `instanceof`) exactly the
- * case they care about. `code`/`message` come from the API's uniform
- * `{ error: { code, message } }` envelope.
+ * case they care about. The API answers every error with an RFC 9457 Problem
+ * Details body: `message` comes from its `detail`, `type`/`title`/`errors` from
+ * the members of the same name, and `code` from the legacy `error` envelope
+ * the API keeps for the whole life of `/v1`.
  */
-import type { ErrorResponse } from './types';
+import type { ErrorResponse, ProblemFieldError } from './types';
+
+/** The Problem Details members an `OwlicAPIError` carries, when the body has them. */
+export interface ProblemMembers {
+  type?: string;
+  title?: string;
+  errors?: readonly ProblemFieldError[];
+}
 
 export class OwlicError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {
@@ -25,13 +34,26 @@ export class OwlicTimeoutError extends OwlicError {}
 export class OwlicAPIError extends OwlicError {
   /** HTTP status code (400, 401, …). */
   readonly status: number;
-  /** Machine-readable code from the error envelope (e.g. `INVALID_API_KEY`). */
+  /** Machine-readable code from the legacy `error` envelope (e.g. `INVALID_API_KEY`). */
   readonly code: string;
+  /**
+   * Problem type URI: its documentation page (e.g.
+   * `https://api.owlic.fr/problems/invalid-api-key`), or `about:blank` when
+   * the HTTP status says it all.
+   */
+  readonly type?: string;
+  /** Short summary of the problem type, identical for every occurrence. */
+  readonly title?: string;
+  /** Every field the API rejected, when the request body failed schema validation. */
+  readonly errors?: readonly ProblemFieldError[];
 
-  constructor(status: number, code: string, message: string) {
+  constructor(status: number, code: string, message: string, problem: ProblemMembers = {}) {
     super(message);
     this.status = status;
     this.code = code;
+    this.type = problem.type;
+    this.title = problem.title;
+    this.errors = problem.errors;
   }
 }
 
@@ -55,8 +77,8 @@ export class RateLimitError extends OwlicAPIError {
   /** Server-suggested wait before retrying, in milliseconds (from `Retry-After`). */
   readonly retryAfter?: number;
 
-  constructor(status: number, code: string, message: string, retryAfter?: number) {
-    super(status, code, message);
+  constructor(status: number, code: string, message: string, retryAfter?: number, problem: ProblemMembers = {}) {
+    super(status, code, message, problem);
     this.retryAfter = retryAfter;
   }
 }
@@ -74,17 +96,39 @@ export function parseRetryAfter(header: string | null): number | undefined {
   return undefined;
 }
 
+/** An object whose members are named after `T`'s but not yet checked. */
+type Unchecked<T> = { [K in keyof T]?: unknown };
+
+function asObject(value: unknown): object | undefined {
+  return typeof value === 'object' && value !== null ? value : undefined;
+}
+
+function asString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+function isProblemFieldError(value: unknown): value is ProblemFieldError {
+  const fieldError = asObject(value) as Unchecked<ProblemFieldError> | undefined;
+  return typeof fieldError?.detail === 'string' && typeof fieldError.pointer === 'string';
+}
+
 /**
- * Structural guard anchored to the contract's `ErrorResponse` type: a rename of
- * the envelope in `@owlic/api-contract` surfaces here as a compile error
- * instead of silently degrading every error to `UNKNOWN`.
+ * Read an error body member by member, keeping each one only when it has the
+ * expected type: a body from a proxy, or from an API older than ADR-36, still
+ * yields whatever it carries. Member names are anchored to the contract's
+ * `ErrorResponse` type, so renaming one in `@owlic/api-contract` surfaces here
+ * as a compile error instead of silently degrading every error to `UNKNOWN`.
  */
-function isErrorEnvelope(body: unknown): body is ErrorResponse {
-  if (typeof body !== 'object' || body === null) return false;
-  const error = (body as Partial<ErrorResponse>).error;
-  return (
-    typeof error === 'object' && error !== null && typeof error.code === 'string' && typeof error.message === 'string'
-  );
+function readErrorBody(body: unknown): { code?: string; message?: string } & ProblemMembers {
+  const problem = (asObject(body) ?? {}) as Unchecked<ErrorResponse>;
+  const envelope = (asObject(problem.error) ?? {}) as Unchecked<ErrorResponse['error']>;
+  return {
+    code: asString(envelope.code),
+    message: asString(problem.detail) ?? asString(envelope.message),
+    type: asString(problem.type),
+    title: asString(problem.title),
+    errors: Array.isArray(problem.errors) ? problem.errors.filter(isProblemFieldError) : undefined,
+  };
 }
 
 /** Build the right `OwlicAPIError` subclass for a response. */
@@ -93,28 +137,23 @@ export function apiErrorFromResponse(
   body: unknown,
   headers: { get(name: string): string | null }
 ): OwlicAPIError {
-  let code = 'UNKNOWN';
-  let message = `Request failed with status ${status}`;
-  if (isErrorEnvelope(body)) {
-    code = body.error.code;
-    message = body.error.message;
-  }
+  const { code = 'UNKNOWN', message = `Request failed with status ${status}`, ...problem } = readErrorBody(body);
 
   switch (status) {
     case 400:
-      return new BadRequestError(status, code, message);
+      return new BadRequestError(status, code, message, problem);
     case 401:
-      return new AuthenticationError(status, code, message);
+      return new AuthenticationError(status, code, message, problem);
     case 403:
-      return new PermissionDeniedError(status, code, message);
+      return new PermissionDeniedError(status, code, message, problem);
     case 404:
-      return new NotFoundError(status, code, message);
+      return new NotFoundError(status, code, message, problem);
     case 422:
-      return new UnprocessableEntityError(status, code, message);
+      return new UnprocessableEntityError(status, code, message, problem);
     case 429:
-      return new RateLimitError(status, code, message, parseRetryAfter(headers.get('retry-after')));
+      return new RateLimitError(status, code, message, parseRetryAfter(headers.get('retry-after')), problem);
     default:
-      if (status >= 500) return new InternalServerError(status, code, message);
-      return new OwlicAPIError(status, code, message);
+      if (status >= 500) return new InternalServerError(status, code, message, problem);
+      return new OwlicAPIError(status, code, message, problem);
   }
 }

@@ -128,7 +128,7 @@ for await (const program of page) {
 
 ## Error handling
 
-All failures extend `OwlicError`. HTTP errors are `OwlicAPIError` subclasses carrying `status` + the API's machine-readable `code`:
+All failures extend `OwlicError`. HTTP errors are `OwlicAPIError` subclasses carrying `status` + the API's machine-readable `code`, and the members of the API's [RFC 9457 Problem Details](https://www.rfc-editor.org/rfc/rfc9457) body:
 
 ```ts
 import { NotFoundError, RateLimitError, OwlicAPIError } from '@owlic/sdk';
@@ -158,6 +158,28 @@ try {
 | `OwlicConnectionError` | — | Network failure (no HTTP response) |
 | `OwlicTimeoutError` | — | Request exceeded `timeout` |
 
+| Member of `OwlicAPIError` | From the response body | Example |
+|---|---|---|
+| `message` | `detail` (falls back to `error.message`) | `Invalid or inactive API key.` |
+| `code` | `error.code` | `INVALID_API_KEY` |
+| `type` | `type` — the problem's documentation page, or `about:blank` | `https://api.owlic.fr/problems/invalid-api-key` |
+| `title` | `title` — short summary, the same for every occurrence | `Invalid API key` |
+| `errors` | `errors` — every rejected field, as a JSON Pointer | `[{ detail: 'Required', pointer: '#/title' }]` |
+
+`type`, `title` and `errors` are `undefined` when the body does not carry them (e.g. an HTML page from a proxy). Every problem type is listed in the "Errors" section of the [OpenAPI document](https://api.owlic.fr/v1/openapi.json).
+
+```ts
+import { BadRequestError } from '@owlic/sdk';
+
+try {
+  await owlic.trainingPrograms.create({ title: '' });
+} catch (error) {
+  if (error instanceof BadRequestError) {
+    for (const { pointer, detail } of error.errors ?? []) console.log(pointer, detail); // "#/title String must contain at least 1 character(s)"
+  }
+}
+```
+
 ### Retries
 
 Retries (`maxRetries`, exponential backoff, honors `Retry-After`) are **method-aware**:
@@ -183,6 +205,11 @@ They are `z.infer<…>` of the `@owlic/api-contract` schemas — the single sour
 This package is mirrored to [`Owlic-App/Typescript-SDK`](https://github.com/Owlic-App/Typescript-SDK) by the `Sync SDK Mirror` GitHub Action (`.github/workflows/sync-sdk-mirror.yml`): every merge to `main` touching `packages/sdk/**` force-pushes a fresh `git subtree split` of this directory over the mirror's `main`. The monorepo is the single source of truth — **never commit to the mirror directly**, changes there are overwritten on the next sync.
 
 ## Changelog
+
+### 0.4.0
+
+- **Problem Details errors** — the API now answers every error with an [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) Problem Details body, served as `application/problem+json`. `OwlicAPIError` gains `type`, `title` and `errors` (every rejected field, with a JSON Pointer to it), and its `message` now comes from `detail`, falling back to `error.message`. `code` still comes from `error.code`, which the API keeps, unchanged, for the whole life of `/v1`. Requests send `Accept: application/json, application/problem+json`. Backward compatible: on `/v1`, `detail` always equals `error.message`, so no existing `message` or `code` changes.
+- **`ErrorResponse` type** — now describes the full Problem Details body (`type`, `title`, `status`, `detail`, optional `errors`, and the deprecated `error` envelope). The new `ProblemFieldError` type describes one entry of `errors`.
 
 ### 0.3.0
 

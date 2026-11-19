@@ -262,7 +262,7 @@ export class Owlic implements ApiCaller {
     requiresAuth: boolean
   ): Promise<T> {
     const url = this.#buildUrl(path, init.query);
-    const baseHeaders: Record<string, string> = { accept: 'application/json' };
+    const baseHeaders: Record<string, string> = { accept: 'application/json, application/problem+json' };
     if (requiresAuth && this.#apiKey) baseHeaders.authorization = `Bearer ${this.#apiKey}`;
     if (init.body !== undefined) baseHeaders['content-type'] = 'application/json';
     // Case-insensitive merge, user headers win (matching the RequestOptions doc).

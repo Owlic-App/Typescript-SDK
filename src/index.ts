@@ -43,6 +43,7 @@ export type {
   DataEnvelope,
   PaginatedEnvelope,
   ErrorResponse,
+  ProblemFieldError,
   RequestOptions,
   HttpMethod,
   QueryParams,
