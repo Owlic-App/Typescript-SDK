@@ -227,13 +227,14 @@ This package is mirrored to [`Owlic-App/Typescript-SDK`](https://github.com/Owli
 
 ## Release process (npm)
 
-The package is published to npm as [`@owlic/sdk`](https://www.npmjs.com/package/@owlic/sdk) by the `Publish SDK to npm` GitHub Action (`.github/workflows/publish-sdk.yml`, manual trigger). The build (`tsup`) emits ESM + CJS + `.d.ts` with the private `@owlic/api-contract` types **inlined**, so the published package is self-contained (zod is its only — type-level — dependency).
+The package is published to npm as [`@owlic/sdk`](https://www.npmjs.com/package/@owlic/sdk) by the `Publish SDK to npm` GitHub Action (`.github/workflows/publish-sdk.yml`), which runs on every push to `main` that touches `packages/sdk/package.json`. The build (`tsup`) emits ESM + CJS + `.d.ts` with the private `@owlic/api-contract` types **inlined**, so the published package is self-contained (zod is its only — type-level — dependency).
 
 To release:
 
-1. Bump `version` in `packages/sdk/package.json` (semver) and merge to `main`.
-2. Run the **Publish SDK to npm** workflow from the Actions tab. It tests, builds, verifies the `.d.ts` is self-contained, refuses to overwrite an existing version, then publishes.
-3. No token: the workflow publishes through npm **trusted publishing** (OIDC). The trusted publisher is declared on npmjs.com → `@owlic/sdk` → Settings → Trusted publishing (GitHub Actions, `Owlic-App` / `Application`, workflow `publish-sdk.yml`). Renaming the workflow file breaks publishing until that setting is updated.
+1. Bump `version` in `packages/sdk/package.json` (semver), with the matching changelog entry above, in a pull request.
+2. Merge it to `main`: the workflow starts by itself. It checks the version is not on npm yet, tests, builds, verifies the `.d.ts` is self-contained, then publishes. A push that changes `package.json` without changing the version publishes nothing. **Merging a version bump is the release**: an npm version can never be published twice, so review the bump as such.
+3. To retry a failed publish, run the **Publish SDK to npm** workflow from the Actions tab. Run by hand, it fails if the version is already on npm.
+4. No token: the workflow publishes through npm **trusted publishing** (OIDC). The trusted publisher is declared on npmjs.com → `@owlic/sdk` → Settings → Trusted publishing (GitHub Actions, `Owlic-App` / `Application`, workflow `publish-sdk.yml`). Renaming the workflow file breaks publishing until that setting is updated.
 
 Local dry run: `npm run build --workspace @owlic/sdk && npm pack --workspace @owlic/sdk`.
 
