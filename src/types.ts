@@ -113,6 +113,7 @@ export type SetPricingRequest = z.infer<typeof contract.SetPricingRequestSchema>
 export type CustomClause = z.infer<typeof contract.CustomClauseSchema>;
 export type GenerateConventionRequest = z.infer<typeof contract.GenerateConventionRequestSchema>;
 export type ConventionResult = z.infer<typeof contract.ConventionResultSchema>;
+export type ConventionPdf = z.infer<typeof contract.ConventionPdfSchema>;
 
 // ── Client plumbing ──────────────────────────────────────────────────────────
 

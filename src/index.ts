@@ -105,6 +105,7 @@ export type {
   CustomClause,
   GenerateConventionRequest,
   ConventionResult,
+  ConventionPdf,
 } from './types';
 
 export { Owlic as default } from './client';

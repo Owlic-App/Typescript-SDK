@@ -1,6 +1,7 @@
 import type {
   ApiCaller,
   AssignProgramRequest,
+  ConventionPdf,
   ConventionResult,
   CreateTrainingActionRequest,
   DataEnvelope,
@@ -182,6 +183,23 @@ export class TrainingActions {
       'POST',
       this.#actionPath(actionId, '/convention'),
       { body, options }
+    );
+    return res.data;
+  }
+
+  /**
+   * The PDF of the convention of one beneficiary company (base64), the same file the
+   * web app downloads. Pass `companyId` when the action has several beneficiary companies.
+   */
+  async getConventionPdf(
+    actionId: string,
+    params: { companyId?: string } = {},
+    options?: RequestOptions
+  ): Promise<ConventionPdf> {
+    const res = await this.#client.request<DataEnvelope<ConventionPdf>>(
+      'GET',
+      this.#actionPath(actionId, '/convention/pdf'),
+      { query: { companyId: params.companyId }, options }
     );
     return res.data;
   }

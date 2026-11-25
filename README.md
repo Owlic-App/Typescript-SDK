@@ -100,6 +100,7 @@ await owlic.trainers.list({ timeout: 5_000, maxRetries: 0, signal: abortControll
 | `owlic.trainingActions.assignTrainers(id, body)` | `POST /v1/training-actions/{actionId}/trainers` |
 | `owlic.trainingActions.setPricing(id, body)` | `POST /v1/training-actions/{actionId}/pricing` |
 | `owlic.trainingActions.generateConvention(id, body)` | `POST /v1/training-actions/{actionId}/convention` |
+| `owlic.trainingActions.getConventionPdf(id, { companyId? })` | `GET /v1/training-actions/{actionId}/convention/pdf` |
 
 Responses are unwrapped: methods return the resource itself (the API's `{ data }` envelope is handled for you).
 
@@ -205,6 +206,11 @@ They are `z.infer<…>` of the `@owlic/api-contract` schemas — the single sour
 This package is mirrored to [`Owlic-App/Typescript-SDK`](https://github.com/Owlic-App/Typescript-SDK) by the `Sync SDK Mirror` GitHub Action (`.github/workflows/sync-sdk-mirror.yml`): every merge to `main` touching `packages/sdk/**` force-pushes a fresh `git subtree split` of this directory over the mirror's `main`. The monorepo is the single source of truth — **never commit to the mirror directly**, changes there are overwritten on the next sync.
 
 ## Changelog
+
+### 0.5.0
+
+- **Convention PDF** — added `trainingActions.getConventionPdf(id, { companyId })` (`GET /v1/training-actions/{actionId}/convention/pdf`) and the `ConventionPdf` type: the PDF of one beneficiary company's convention, base64-encoded, the same file the web app downloads, with `missingInfo` (what is still to complete before signature). `companyId` is required when the action has several beneficiary companies (one convention each).
+- **`ConventionResult` without `content`** — `generateConvention` no longer returns `content`. That text came from a fixed template that named the organization « Organisation » and left the declaration number « [À compléter] »; it was never the convention people sign. Read the convention with `getConventionPdf` instead.
 
 ### 0.4.0
 
