@@ -622,6 +622,65 @@ describe('Owlic client — training action writes', () => {
   });
 });
 
+describe('Owlic client — organization profile', () => {
+  it('should GET then PATCH the profile of the key organization, sending only the given fields', async () => {
+    const profile = { organizationId: 'org_1', legalName: 'Organisme Exemple', isSaved: true };
+    const { client, fetchMock } = createClient([
+      jsonResponse(200, { data: { ...profile, isSaved: false } }),
+      jsonResponse(200, { data: profile }),
+    ]);
+
+    const read = await client.organization.get();
+    const updated = await client.organization.update({ legalName: 'Organisme Exemple', representativeJobTitle: null });
+
+    const [readUrl, readInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(readUrl).toBe('https://api.owlic.fr/v1/organization');
+    expect(readInit.method).toBe('GET');
+    expect(read.isSaved).toBe(false);
+    const [updateUrl, updateInit] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(updateUrl).toBe('https://api.owlic.fr/v1/organization');
+    expect(updateInit.method).toBe('PATCH');
+    expect(JSON.parse(updateInit.body as string)).toEqual({ legalName: 'Organisme Exemple', representativeJobTitle: null });
+    expect(updated).toEqual(profile);
+  });
+
+  it('should PUT the logo in base64 and resolve to its URL', async () => {
+    const { client, fetchMock } = createClient([
+      jsonResponse(200, { data: { logoUrl: 'https://storage.example/organizations/org_1/logo/a.png' } }),
+    ]);
+
+    const logo = await client.organization.uploadLogo({ contentBase64: 'iVBORw0KGgo=' });
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://api.owlic.fr/v1/organization/logo');
+    expect(init.method).toBe('PUT');
+    expect(JSON.parse(init.body as string)).toEqual({ contentBase64: 'iVBORw0KGgo=' });
+    expect(logo.logoUrl).toBe('https://storage.example/organizations/org_1/logo/a.png');
+  });
+
+  it('should DELETE the logo and resolve to nothing on 204', async () => {
+    const noContent = { ok: true, status: 204, headers: { get: () => null } } as unknown as Response;
+    const { client, fetchMock } = createClient([noContent]);
+
+    await expect(client.organization.removeLogo()).resolves.toBeUndefined();
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://api.owlic.fr/v1/organization/logo');
+    expect(init.method).toBe('DELETE');
+  });
+
+  it('should surface a refused logo as a BadRequestError carrying the API message', async () => {
+    const { client } = createClient([
+      jsonResponse(400, { error: { code: 'BAD_REQUEST', message: 'Ce SVG est refusé : il contient un script (<script>).' } }),
+    ]);
+
+    const failure = client.organization.uploadLogo({ contentBase64: 'PHN2Zz4=' });
+
+    await expect(failure).rejects.toBeInstanceOf(BadRequestError);
+    await expect(failure).rejects.toThrow('Ce SVG est refusé');
+  });
+});
+
 describe('Owlic client — contract conformance', () => {
   it('should cover every route declared in the business registry', async () => {
     const { buildBusinessRegistry } = await import('../../../api-contract/src/businessRegistry');
@@ -641,6 +700,10 @@ describe('Owlic client — contract conformance', () => {
     const ID = 'SENTINEL-ID';
     await client.whoami();
     await client.health();
+    await client.organization.get();
+    await client.organization.update({ legalName: 'O' });
+    await client.organization.uploadLogo({ contentBase64: 'iVBORw0KGgo=' });
+    await client.organization.removeLogo();
     await client.trainers.list();
     await client.trainers.get(ID);
     await client.trainingPrograms.list();
