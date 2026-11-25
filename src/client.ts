@@ -6,6 +6,7 @@ import {
   RateLimitError,
   apiErrorFromResponse,
 } from './errors';
+import { Organization } from './resources/organization';
 import { Trainers } from './resources/trainers';
 import { TrainingActions } from './resources/trainingActions';
 import { TrainingPrograms } from './resources/trainingPrograms';
@@ -117,6 +118,8 @@ function mergeHeaders(...sources: Array<Record<string, string> | undefined>): Re
  * ```
  */
 export class Owlic implements ApiCaller {
+  /** `/v1/organization*` — the key's organization profile and logo */
+  readonly organization: Organization;
   /** `/v1/trainers*` */
   readonly trainers: Trainers;
   /** `/v1/training-programs*` */
@@ -159,6 +162,7 @@ export class Owlic implements ApiCaller {
     this.#fetch = fetchImpl;
     this.#defaultHeaders = options.defaultHeaders ?? {};
 
+    this.organization = new Organization(this);
     this.trainers = new Trainers(this);
     this.trainingPrograms = new TrainingPrograms(this);
     this.trainingActions = new TrainingActions(this);
