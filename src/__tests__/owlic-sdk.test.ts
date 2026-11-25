@@ -622,6 +622,27 @@ describe('Owlic client — training action writes', () => {
   });
 });
 
+describe('Owlic client — convention PDF', () => {
+  it('should GET the convention PDF of the requested beneficiary company', async () => {
+    const pdf = {
+      companyId: '12345678900011',
+      companyName: 'Acme',
+      contentType: 'application/pdf',
+      sizeBytes: 4,
+      contentBase64: 'JVBERg==',
+      missingInfo: [],
+    };
+    const { client, fetchMock } = createClient([jsonResponse(200, { data: pdf })]);
+
+    const result = await client.trainingActions.getConventionPdf('ta_1', { companyId: '12345678900011' });
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://api.owlic.fr/v1/training-actions/ta_1/convention/pdf?companyId=12345678900011');
+    expect(init.method).toBe('GET');
+    expect(result).toEqual(pdf);
+  });
+});
+
 describe('Owlic client — contract conformance', () => {
   it('should cover every route declared in the business registry', async () => {
     const { buildBusinessRegistry } = await import('../../../api-contract/src/businessRegistry');
@@ -676,6 +697,7 @@ describe('Owlic client — contract conformance', () => {
       generatePdf: false,
       sendNotifications: false,
     });
+    await client.trainingActions.getConventionPdf(ID);
 
     const missing = declared.filter((route) => !called.has(route));
     expect(missing).toEqual([]); // every contract route must have an SDK method hitting it
