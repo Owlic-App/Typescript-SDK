@@ -122,6 +122,10 @@ export type UpdateOrganizationProfileRequest = z.infer<typeof contract.UpdateOrg
 export type UploadOrganizationLogoRequest = z.infer<typeof contract.UploadOrganizationLogoRequestSchema>;
 export type OrganizationLogo = z.infer<typeof contract.OrganizationLogoSchema>;
 
+// ── Companies ────────────────────────────────────────────────────────────────
+
+export type CompanyRepresentative = z.infer<typeof contract.CompanyRepresentativeSchema>;
+
 // ── Client plumbing ──────────────────────────────────────────────────────────
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';

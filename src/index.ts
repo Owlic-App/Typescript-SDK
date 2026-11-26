@@ -33,6 +33,7 @@ export {
 } from './errors';
 
 export { Organization } from './resources/organization';
+export { Companies } from './resources/companies';
 export { Trainers } from './resources/trainers';
 export { TrainingPrograms } from './resources/trainingPrograms';
 export type { ListTrainingProgramsParams } from './resources/trainingPrograms';
@@ -57,6 +58,8 @@ export type {
   UpdateOrganizationProfileRequest,
   UploadOrganizationLogoRequest,
   OrganizationLogo,
+  // Companies
+  CompanyRepresentative,
   // Trainers
   Trainer,
   TrainerDetail,

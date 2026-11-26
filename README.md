@@ -81,6 +81,8 @@ await owlic.trainers.list({ timeout: 5_000, maxRetries: 0, signal: abortControll
 | `owlic.organization.update(body)` | `PATCH /v1/organization` (only the given fields change; `null` or `""` clears one) |
 | `owlic.organization.uploadLogo({ contentBase64 })` | `PUT /v1/organization/logo` (PNG, JPEG or SVG, 300 KB at most; an SVG is converted to PNG) |
 | `owlic.organization.removeLogo()` | `DELETE /v1/organization/logo` |
+| `owlic.companies.getRepresentative(companyId)` | `GET /v1/companies/{companyId}/representative` (who signs the company's conventions, or `null`) |
+| `owlic.companies.saveRepresentative(companyId, body)` | `PUT /v1/companies/{companyId}/representative` (replaces it; prefills the next conventions) |
 | `owlic.trainers.list()` | `GET /v1/trainers` |
 | `owlic.trainers.get(id)` | `GET /v1/trainers/{trainerId}` |
 | `owlic.trainingPrograms.list({ page, limit })` | `GET /v1/training-programs` |
@@ -210,6 +212,10 @@ They are `z.infer<…>` of the `@owlic/api-contract` schemas — the single sour
 This package is mirrored to [`Owlic-App/Typescript-SDK`](https://github.com/Owlic-App/Typescript-SDK) by the `Sync SDK Mirror` GitHub Action (`.github/workflows/sync-sdk-mirror.yml`): every merge to `main` touching `packages/sdk/**` force-pushes a fresh `git subtree split` of this directory over the mirror's `main`. The monorepo is the single source of truth — **never commit to the mirror directly**, changes there are overwritten on the next sync.
 
 ## Changelog
+
+### 0.6.0
+
+- **Company representative** — added `companies.getRepresentative(companyId)` and `companies.saveRepresentative(companyId, body)` (`GET`/`PUT /v1/companies/{companyId}/representative`) and the `CompanyRepresentative` type: the person who signs the conventions of a client company. Once recorded, it prefills the company's next conventions, in the web app and in `trainingActions.getConventionPdf`. A company that is not a client of the key's organization throws `NotFoundError`; a field carrying a script or a path traversal throws `BadRequestError`.
 
 ### 0.5.0
 

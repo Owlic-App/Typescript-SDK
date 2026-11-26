@@ -679,6 +679,24 @@ describe('Owlic client — organization profile', () => {
     expect(logo.logoUrl).toBe('https://storage.example/organizations/org_1/logo/a.png');
   });
 
+  it('should GET then PUT the representative of a client company', async () => {
+    const jeanne = { firstName: 'Jeanne', lastName: 'Martin', email: 'jeanne.martin@client.fr', jobTitle: 'DRH' };
+    const { client, fetchMock } = createClient([jsonResponse(200, { data: null }), jsonResponse(200, { data: jeanne })]);
+
+    const before = await client.companies.getRepresentative('co_1');
+    const saved = await client.companies.saveRepresentative('co_1', jeanne);
+
+    expect(before).toBeNull();
+    const [readUrl, readInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(readUrl).toBe('https://api.owlic.fr/v1/companies/co_1/representative');
+    expect(readInit.method).toBe('GET');
+    const [saveUrl, saveInit] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(saveUrl).toBe('https://api.owlic.fr/v1/companies/co_1/representative');
+    expect(saveInit.method).toBe('PUT');
+    expect(JSON.parse(saveInit.body as string)).toEqual(jeanne);
+    expect(saved).toEqual(jeanne);
+  });
+
   it('should DELETE the logo and resolve to nothing on 204', async () => {
     const noContent = { ok: true, status: 204, headers: { get: () => null } } as unknown as Response;
     const { client, fetchMock } = createClient([noContent]);
@@ -725,6 +743,8 @@ describe('Owlic client — contract conformance', () => {
     await client.organization.update({ legalName: 'O' });
     await client.organization.uploadLogo({ contentBase64: 'iVBORw0KGgo=' });
     await client.organization.removeLogo();
+    await client.companies.getRepresentative(ID);
+    await client.companies.saveRepresentative(ID, { firstName: 'J', lastName: 'M', email: 'j@m.fr' });
     await client.trainers.list();
     await client.trainers.get(ID);
     await client.trainingPrograms.list();
