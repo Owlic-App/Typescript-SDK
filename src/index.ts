@@ -32,6 +32,7 @@ export {
   InternalServerError,
 } from './errors';
 
+export { Organization } from './resources/organization';
 export { Trainers } from './resources/trainers';
 export { TrainingPrograms } from './resources/trainingPrograms';
 export type { ListTrainingProgramsParams } from './resources/trainingPrograms';
@@ -51,6 +52,11 @@ export type {
   // Identity & system
   WhoAmI,
   Health,
+  // Organization profile
+  OrganizationProfile,
+  UpdateOrganizationProfileRequest,
+  UploadOrganizationLogoRequest,
+  OrganizationLogo,
   // Trainers
   Trainer,
   TrainerDetail,

@@ -115,6 +115,13 @@ export type GenerateConventionRequest = z.infer<typeof contract.GenerateConventi
 export type ConventionResult = z.infer<typeof contract.ConventionResultSchema>;
 export type ConventionPdf = z.infer<typeof contract.ConventionPdfSchema>;
 
+// ── Organization profile ─────────────────────────────────────────────────────
+
+export type OrganizationProfile = z.infer<typeof contract.OrganizationProfileSchema>;
+export type UpdateOrganizationProfileRequest = z.infer<typeof contract.UpdateOrganizationProfileRequestSchema>;
+export type UploadOrganizationLogoRequest = z.infer<typeof contract.UploadOrganizationLogoRequestSchema>;
+export type OrganizationLogo = z.infer<typeof contract.OrganizationLogoSchema>;
+
 // ── Client plumbing ──────────────────────────────────────────────────────────
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';

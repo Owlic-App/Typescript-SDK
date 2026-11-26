@@ -77,6 +77,10 @@ await owlic.trainers.list({ timeout: 5_000, maxRetries: 0, signal: abortControll
 |---|---|
 | `owlic.whoami()` | `GET /v1/whoami` |
 | `owlic.health()` | `GET /health` (no auth — works on a keyless client; returns the payload even on 503) |
+| `owlic.organization.get()` | `GET /v1/organization` (the key's organization profile, with the public-registry suggestion) |
+| `owlic.organization.update(body)` | `PATCH /v1/organization` (only the given fields change; `null` or `""` clears one) |
+| `owlic.organization.uploadLogo({ contentBase64 })` | `PUT /v1/organization/logo` (PNG, JPEG or SVG, 300 KB at most; an SVG is converted to PNG) |
+| `owlic.organization.removeLogo()` | `DELETE /v1/organization/logo` |
 | `owlic.trainers.list()` | `GET /v1/trainers` |
 | `owlic.trainers.get(id)` | `GET /v1/trainers/{trainerId}` |
 | `owlic.trainingPrograms.list({ page, limit })` | `GET /v1/training-programs` |
